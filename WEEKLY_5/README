@@ -1,0 +1,52 @@
+Name: Cynthia Li
+ID: 1529078
+CMPUT 274, FALL 2018
+
+WEEKLY EXERCISE 5: counting lights
+sought help from TAs in office hour and various online resources on C++ syntax
+
+Included Files:
+    counting.cpp
+    Makefile
+    README
+
+Accessories:
+    - Arduino MEGA (AMG)
+    - Breadboard
+    - 5 LEDs
+    - two buttons
+    - 5 560Ohm resistors
+    - 11 wires
+
+Wiring instructions:
+    Arduino pin 13 <--> resistor <--> longer LED lead || shorter LED lead <--> ground
+     - repeat for another 4 LEDs placed consecutively on one side of the LED
+     - Arduino pins 12 - 9
+    Arduino pin 7 <--> button <--> ground 
+    Arduino pin 6 <--> button <--> ground
+    Arduino 5V pin <--> positive terminal of Breadboard
+    Arduino GND pin <--> negative terminal of Breadboard
+
+Running Instructions:
+    - connect the arduino mega to computer through an A-B style USB cable. ensure that the Arduino is using the proper serial port.
+    - open the terminal and change directory to which that contains the three files (counting.cpp, Makefile, README)
+    - enter "make upload" into terminal. The program is now uploaded to the arduino and fully functional
+
+
+Notes and Assumptions:
+    setup FUNCTION: intializes Arduino, configures LED and button pins
+
+    lightsoff FUNCTION: loops through all LEDs turns them off. Used throughout code when changing lights
+
+    lightson FUNCTION: loops through LEDs to turn them on. Used for when count is negative
+
+    multilight FUNCTION: resets LED lights to off mode by calling lights off function before turning on appropriate LEDs that correspond with the current count number
+
+    light FUNCTION: checks if count is in one of three cases: able to be represented by 1 LED, is over the limit with which that can be represented by the LEDs, or is negative before taking appropriate action. Otherwise, calls upon multilight function.
+
+    increment/decrement FUNCTIONS: adds/subtracts from count and calls upon light function to update LEDs
+
+    main FUNCTION: calls setup function to properly initilize arduino before proceeding to handle button inputs. Ensures buttons do not increment/decrement count more than once when pressed down.
+
+    Notes: Negative numbers will be ignored and count will be reset to 0 every time a negative number is reached. i.e. if the decrement button is pressed when all lights are off, it takes one increment button to resume counting from 1 onwards. 
+    Once the max integer that can be represented by the LEDs are reached, one more press of the increment button will restart the count.

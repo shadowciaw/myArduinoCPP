@@ -23,7 +23,7 @@ void readString(char str[], int len)
     while (index < len - 1)
     {
         // as long as we're not done reading all of char str array
-        if (Serial.available() > 0)
+        if (Serial3.available() > 0)
         {
             // if theres something to be read on Serial
             char byteRead = Serial.read();
@@ -87,6 +87,8 @@ uint16_t generate_key(){
 
 uint16_t setup()
 {
+    // function header //
+
     init();
 
     // set idPin to INPUT and turn on the internal pullup resistor
@@ -99,20 +101,19 @@ uint16_t setup()
     uint16_t private_key = generate_key();
     int p = 19211;
     int g = 6;
-    int public_key = pow(g, a) % p;
+    int public_key = pow(g, private_key) % p;
 
-    // Serial.print("public key: ");
-    Serial.printl(public_key);
+    Serial.println(public_key);
 
-    // ---
+    // --- done operating with own key, working on obtaining other key -- //
 
     while (Serial3.available() == 0){}
     // stop here until a key is printed on other serial
 
-    //int B = Serial3.read();
     uint16_t B = readUnsigned16();
+    // B is public key of other user
 
-    int k = pow(B, a);
+    uint16_t k = pow(B, a);
     //shared secret key: k = B^a
 
     return k;
@@ -120,6 +121,7 @@ uint16_t setup()
 
 uint8_t encryptIt((uint16_t) key, byte) {
     // encrypts a byte
+    
     uint8_t encryptedByte = byte ^ ((uint8_t) key);
 
     return encryptedByte;

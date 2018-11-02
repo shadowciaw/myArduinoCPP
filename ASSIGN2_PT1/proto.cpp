@@ -21,20 +21,20 @@ void setup() {
 	Serial.begin(9600);
 	Serial3.begin(9600);
 
-	uint16_t private_key;
-	int p = 19211;
-	int g = 6;
-	int public_key = g**a % p;
+	// uint16_t private_key;
+	// int p = 19211;
+	// int g = 6;
+	// int public_key = g**a % p;
 
-	Serial.print("public key: ");
-	Serial.printl(public_key);
+	// Serial.print("public key: ");
+	// Serial.printl(public_key);
 
-	// ---
+	// // ---
 
-	while (Serial3.available() == 0) {}
-	char B = Serial3.read();
+	// while (Serial3.available() == 0) {}
+	// char B = Serial3.read();
 
-	int k = B**a
+	// int k = B**a
 
 	//shared secret key: k = B^a
 }

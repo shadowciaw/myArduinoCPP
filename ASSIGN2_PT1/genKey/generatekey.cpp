@@ -29,7 +29,7 @@ void readString(char str[], int len)
             char byteRead = Serial.read();
 
             // checks if user pressed enter, if so, break
-            if (byteRead = '\r')
+            if ((int) byteRead == 13)
             {
                 break;
             }
@@ -46,7 +46,7 @@ void readString(char str[], int len)
     str[index] = '\0';
 }
 
-uint16_t readUnsigned16()
+int readUnsigned16()
 {
     // FUNCTION HEADER
 
@@ -66,11 +66,11 @@ uint16_t readUnsigned16()
     // which returns a long 32bit integer???
 }
 
-uint16_t generate_key(){
+int generate_key(){
     // generates 16 bit private key from idPin
 
     // output variable
-    uint16_t key = 0;
+    int key = 0;
 
     for (int i = 0; i < 16; i++){
         int bit = analogRead(idPin) & 1;
@@ -79,13 +79,13 @@ uint16_t generate_key(){
         // shorthand for key = key | (bit << i );
         // << is operator for binary shifting. 1 << 2 shifts 1 from 2^0 to 2^2
 
-        delayTime(50); // 50 ms
+        delay(50); // 50 ms
     }
 
     return key;
 }
 
-uint16_t setup()
+void setup()
 {
     // function header //
 
@@ -103,17 +103,17 @@ uint16_t setup()
     int g = 6;
     int public_key = pow(g, private_key) % p;
 
-    Serial.println(public_key);
+    Serial.println(private_key);
 
     // --- done operating with own key, working on obtaining other key -- //
 
     while (Serial3.available() == 0){}
     // stop here until a key is printed on other serial
 
-    uint16_t B = readUnsigned16();
+    int B = readUnsigned16();
     // B is public key of other user
 
-    uint16_t k = pow(B, a);
+    int k = pow(B, a);
     //shared secret key: k = B^a
 
     return k;
@@ -122,7 +122,7 @@ uint16_t setup()
 
 int main()
 {
-    uint16_t k = setup();
+    setup();
     // shared secret key k returned from setup
 
     Serial.flush();

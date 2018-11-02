@@ -3,29 +3,26 @@
     ID: 1529078
     CMPUT 274 FALL 2018
 
-    Assignment 2 part 1
+    Assignment 2 part 1: proof of concept
 
 */
 
 #include <Arduino.h>
-#include <cstdlib>
-
-// supposed to be private key genereatd by random()
-//uint16_t a;
-
 
 // to be used to genereate random private key
-// not being connected cause numbers to fluctuate
+// not connected cause numbers to fluctuate
 const int idPin = 1;
 
 void readString(char str[], int len)
 {
+    // function header //
+
     int index = 0;
 
-    // using while instead of for bc want to know where to put null terminal when while loop ends
+    // using while instead of for bc wanna know where to put null terminal when while loop ends
     while (index < len - 1)
     {
-        // as long as we're not done reading all of str
+        // as long as we're not done reading all of char str array
         if (Serial.available() > 0)
         {
             // if theres something to be read on Serial
@@ -54,9 +51,11 @@ uint16_t readUnsigned16()
     // FUNCTION HEADER
 
     // creates array of length 16 named str
-    // SHOULD THIS BE 32 INSTEAD OR????
-
     char str[16];
+
+    // read from serial terminal and produce 
+
+    // wait nothing was returned in these two functions, str has been made and appended but we do nothing with it???
     readString(str, 16);
     return atol(str);
     // why can a number that fits unsigned long but not a signed long be returned
@@ -67,21 +66,21 @@ uint16_t readUnsigned16()
     // which returns a long 32bit integer???
 }
 
-int generate_key(){
+uint16_t generate_key(){
     // generates 16 bit private key from idPin
 
     // output variable
-    int key;
+    uint16_t key = 0;
 
     for (int i = 0; i < 16; i++){
         bit[i] = analogRead(idPin, BIN) & 1;
         // obtains least significant bit of analogRead
         key |= (bit << i);
+        // shorthand for key = key | (bit << i );
+        // << is operator for binary shifting. 1 << 2 shifts 1 from 2^0 to 2^2
+
         delayTime(50); // 50 ms
     }
-    // god knows wtf im doing 
-    // is this an int of 1s and 0s or ???
-    // how do i turn this into an int
 
     return key;
 }
@@ -98,7 +97,6 @@ uint16_t setup()
     Serial3.begin(9600);
 
     uint16_t private_key = generate_key();
-    //rand() % pow(2.0, 16.0); // GENEREATE 16 BIT PRIVATE KEY
     int p = 19211;
     int g = 6;
     int public_key = pow(g, a) % p;
@@ -117,7 +115,7 @@ uint16_t setup()
     int k = pow(B, a);
     //shared secret key: k = B^a
 
-    return k
+    return k;
 }
 
 uint8_t encryptIt((uint16_t) key, byte) {

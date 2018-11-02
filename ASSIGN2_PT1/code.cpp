@@ -119,9 +119,10 @@ uint16_t setup()
     return k;
 }
 
+/*
 uint8_t encryptIt((uint16_t) key, byte) {
     // encrypts a byte
-    
+
     uint8_t encryptedByte = byte ^ ((uint8_t) key);
 
     return encryptedByte;
@@ -134,6 +135,7 @@ void readSend(uint16_t k)
 
     while (Serial.available() == 0) {}
     uint8_t byte = Serial.read();
+    // ex. typed "C" will be an int represented by ascii
 
     // the first while loop waits for something to appear right?
     // if i wanna type something there should i keep it or no
@@ -170,13 +172,15 @@ void receive() {
     // decrypt it using shared secret key
     // send to serial monitor
 }
+*/
 
 int main()
 {
     uint16_t k = setup();
-
+    // shared secret key k returned from setup
+/*
     while (true) {
-        // use exlusive or operation for encryption/decryption
+        // use exlusive-or operation (^) for encryption/decryption
 
         // given a message character m, compute character e by exclusive or
         // with first 8 bits:
@@ -188,7 +192,7 @@ int main()
         readSend(k);
         receive();
     }
-
+*/
     Serial.flush();
 
     return 0;

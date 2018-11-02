@@ -13,6 +13,8 @@
 // not connected cause numbers to fluctuate
 const int idPin = 1;
 
+uint16_t skey;
+
 void readString(char str[], int len)
 {
     // function header //
@@ -29,7 +31,7 @@ void readString(char str[], int len)
             char byteRead = Serial.read();
 
             // checks if user pressed enter, if so, break
-            if (byteRead = '\r')
+            if ((int)byteRead == 13)
             {
                 break;
             }
@@ -48,7 +50,7 @@ void readString(char str[], int len)
 
 int readUnsigned16()
 {
-    // FUNCTION HEADER
+    // FUNCTION HEADER //
 
     // creates array of length 16 named str
     char str[16];
@@ -87,7 +89,18 @@ int generate_key()
     return key;
 }
 
-uint16_t setup()
+uint32_t powMod(int g, uint16_t private_key, int p)
+{
+    g = g % p;
+    uint32_t public_key = 1 % p;
+    for (uint32_t i = 0; i < private_key; i++)
+    {
+        public_key = (public_key * g) % p;
+    }
+    return public_key;
+}
+
+void setup()
 {
     // function header //
 
@@ -103,38 +116,39 @@ uint16_t setup()
     uint16_t private_key = generate_key();
     int p = 19211;
     int g = 6;
-    uint16_t public_key = pow(g, private_key) % p;
+    uint32_t public_key = powMod(g, private_key, p);
 
-    Serial.print("Your public key is: ")
+    Serial.print("Your public key is: ");
     Serial.println(public_key);
 
     // --- done operating with own key, working on obtaining other key -- //
-    Serial.print("Now enter other user's public key: ")
+    Serial.print("Now enter the other user's public key: ");
     while (Serial.available() == 0)
     {
     }
     // stop here until a key is printed on other serial
 
+    Serial.println(sizeof(public_key));
+    Serial.println(private_key);
+    Serial.println(public_key);
+
     uint16_t B = readUnsigned16();
     // B is public key of other user
 
-    uint16_t k = pow(B, a);
+    skey = pow(B, private_key);
     //shared secret key: k = B^a
-    // WORK ON
-
-    return k;
 }
 
-uint8_t encryptIt((uint16_t)key, byte)
+int encrypted(uint8_t byte) // what types for these???
 {
     // encrypts a byte
 
-    uint8_t encryptedByte = byte ^ ((uint8_t)key);
+    int encryptedByte = byte ^ ((uint8_t)skey);
 
     return encryptedByte;
 }
 
-void readSend(uint16_t k)
+void readSend()
 {
     // read a character (if available) from serial monitor
     // send it to the other machine ENCRYPTED With help of shared secret key k
@@ -145,7 +159,7 @@ void readSend(uint16_t k)
         {
         }
         char byte = Serial.read();
-        // ex. typed "C" will be an int represented by ascii
+        // ex. already a byte
 
         //Serial.write(byteread);
         // Serial.write writes binary byte to serial mon, which is interpreted as char
@@ -159,22 +173,25 @@ void readSend(uint16_t k)
         // do i really need this? its gonna print after every char right? how would i go about waiting for the entire thing then
         // if i was to do what was done in readString() id have to know the length of the message first dont i
 
-        // why do they use uint32 and uint8 ?? 
-        // why do we need to type cast it down to 8??? 
+        // why do they use uint32 and uint8 ??
+        // why do we need to type cast it down to 8???
         // its 16 bits long how tf???
 
-        if ((int) byte == 13)
+        if ((int)byte == 13)
         {
             // send \r (carriage return)
-            Serial3.write(encryptIt(k, "\r"));
+            Serial3.write(encrypted('\r'));
 
             // follow with line feed char \n
-            Serial3.write(encryptIt(k, "\n"))
-            // both are encrypted
+            Serial3.write(encrypted('\n'));
+                // both are encrypted
 
-            break;
+                break;
         }
-        
+        Serial.print(byte);
+
+        Serial3.write(encrypted(k, byte));
+
         Serial.flush();
         Serial3.flush();
     }
@@ -185,11 +202,26 @@ void receive()
     // receive an encrypted byte (if available) from other machine
     // decrypt it using shared secret key
     // send to serial monitor
+    while (true)
+    {
+        while (Serial.available() == 0)
+        {
+        }
+        char byteRead = Serial3.read();
+
+        Serial.print(encrypted(byteRead));
+        if ((int)byteRead == 13)
+        {
+            break;
+        }
+    }
+    Serial.flush();
+    Serial3.flush();
 }
 
 int main()
 {
-    uint16_t k = setup();
+    setup();
     // shared secret key k returned from setup
 
     while (true)
@@ -203,7 +235,7 @@ int main()
 
         // since exclusive or is its own inverse, original message character m
         // can be obtained from encrypted e with klow: m = e (exclusive or) klow
-        readSend(k);
+        readSend();
         receive();
     }
 

@@ -25,7 +25,7 @@ void readString(char str[], int len)
     while (index < len - 1)
     {
         // as long as we're not done reading all of char str array
-        if (Serial3.available() > 0)
+        if (Serial.available() > 0)
         {
             // if theres something to be read on Serial
             char byteRead = Serial.read();
@@ -128,10 +128,6 @@ void setup()
     }
     // stop here until a key is printed on other serial
 
-    Serial.println(sizeof(public_key));
-    Serial.println(private_key);
-    Serial.println(public_key);
-
     uint16_t B = readUnsigned16();
     // B is public key of other user
 
@@ -139,7 +135,7 @@ void setup()
     //shared secret key: k = B^a
 }
 
-int encrypted(uint8_t byte) // what types for these???
+int encrypted(uint8_t byte) 
 {
     // encrypts a byte
 
@@ -190,7 +186,7 @@ void readSend()
         }
         Serial.print(byte);
 
-        Serial3.write(encrypted(k, byte));
+        Serial3.write(encrypted(byte));
 
         Serial.flush();
         Serial3.flush();
@@ -235,8 +231,13 @@ int main()
 
         // since exclusive or is its own inverse, original message character m
         // can be obtained from encrypted e with klow: m = e (exclusive or) klow
-        readSend();
-        receive();
+        if (Serial.available()) {
+            readSend();
+        }
+
+        if (Serial3.available()) {
+            receive();
+        }
     }
 
     Serial.flush();

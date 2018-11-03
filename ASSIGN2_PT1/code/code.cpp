@@ -12,7 +12,7 @@
 // not connected cause numbers to fluctuate
 const int idPin = 1;
 
-int skey;
+uint16_t skey;
 
 void readString(char str[], int len)
 {
@@ -143,84 +143,41 @@ void setup()
     Serial.println();
 }
 
-int encrypted(uint8_t byte)
-{
-    // encrypts a byte
+uint8_t encr(uint8_t byte) {
+    uint8_t encrypted = byte ^ ((uint8_t) skey);
 
-    int encryptedByte = byte ^ ((uint8_t)skey);
-
-    return encryptedByte;
+    return (encrypted);
 }
 
-void readSend()
-{
-    // read a character (if available) from serial monitor
-    // send it to the other machine ENCRYPTED With help of shared secret key k
-    while (true)
-    {
-        // while serial is empty, wait.
-        while (Serial.available() == 0)
-        {
-        }
-        char byte = Serial.read();
-        // ex. already a byte
+void send() {
+    uint8_t c = Serial.read();
+    // reads from keyboard
 
-        //Serial.write(byteread);
-        // Serial.write writes binary byte to serial mon, which is interpreted as char
+    Serial.write(c);
+    // prints to own serial what was typed
 
-        // Serial3.write() // writes BINARY data to serial port
-        // inside can be (val), (str), (buf, len)
-        // value to send as single byte
-        // str to send as series of bytes
-        // array to send as series of bytes and length of buffer
+    // Serial.write(encr(encr(c)); works properly
 
-        // do i really need this? its gonna print after every char right? how would i go about waiting for the entire thing then
-        // if i was to do what was done in readString() id have to know the length of the message first dont i
-
-        // why do they use uint32 and uint8 ??
-        // why do we need to type cast it down to 8???
-        // its 16 bits long how tf???
-
-        if ((int)byte == 13)
-        {
-            // send \r (carriage return)
-            Serial3.write(encrypted('\r'));
-
-            // follow with line feed char \n
-            Serial3.write(encrypted('\n'));
-            // both are encrypted
-
-            break;
-        }
-        Serial.print(byte);
-
-        Serial3.write(encrypted(byte));
-
-        Serial.flush();
-        Serial3.flush();
+    if ((int) c == 13) {
+        // if carriage return was entered
+        Serial3.write(encr(c));
+        Serial3.write(encr('\n'));
+        Serial.println();
+        // sends \r and \n to other serial
+        // prints newline to own serial
     }
+    if ((int) c != 13) {
+        Serial3.write(encr(c));
+    }
+
 }
 
-void receive()
-{
-    // receive an encrypted byte (if available) from other machine
-    // decrypt it using shared secret key
-    // send to serial monitor
-    while (true)
-    {
-        while (Serial.available() == 0)
-        {
-        }
-        char byteRead = Serial3.read();
+void receive() {
+    uint8_t c = Serial3.read();
+    // reads from serial, is in bytes
 
-        Serial.print(encrypted(byteRead));
-        if ((int)byteRead == 13)
-        {
-            break;
-        }
-    }
-    Serial.flush();
-    Serial3.flush();
+    uint8_t decr = encr(c);
+    Serial.write(decr);
 }
 
 int main()
@@ -228,6 +185,18 @@ int main()
     setup();
     // shared secret key k returned from setup
 
+while (true) {
+    if (Serial.available()) {
+        // if something is being typed by user
+        send();
+    }
+    if (Serial3.available()){
+        // if something is being typed by other user
+        receive();
+    }
+}
+
+/*
     while (true)
     {
         // use exlusive-or operation (^) for encryption/decryption
@@ -240,40 +209,49 @@ int main()
         // since exclusive or is its own inverse, original message character m
         // can be obtained from encrypted e with klow: m = e (exclusive or) klow
 
-
         if (Serial.available() > 0)
         // if user has typed something in serial, send it to other user
         {
             uint8_t byte = Serial.read();
+            // is byte. can be in ascii if print and char if write
+
+            Serial.write(byte);
+            // displays what the user typed
 
             if ((int)byte == 13)
             {
-                Serial3.print( '\r' ^ ((uint8_t) skey));
-                Serial3.print('\n' ^ ((uint8_t) skey));
+                Serial3.print('\r' ^ ((uint8_t)skey));
+                Serial3.print('\n' ^ ((uint8_t)skey));
+                Serial.println();
             }
             else
             {
-
                 uint8_t encryptedByte = byte ^ ((uint8_t)skey);
-                Serial3.write(encryptedByte);
+                Serial3.print(encryptedByte);
             }
         }
 
         if (Serial3.available() > 0)
-        // if other user has typed something in serial, decrypt it and 
-        { 
-            uint8_t encryptedByte = Serial.read();
+        // if other user has typed something in serial, decrypt it and print in serial
+        {
+            while (true)
+            {
+                uint8_t encryptedByte = Serial.read();
+                uint8_t decryptedByte = encryptedByte ^ ((uint8_t)skey);
 
-            Serial.print(encryptedByte ^ ((uint8_t) skey));
-            
+                Serial.write(decryptedByte);
+                // serial.write prints character represented by ascii
+                // serial.print prints ascii number
+                // serial.read returns ascii char
+                if ((int)encryptedByte == 13)
+                {
+                    break;
+                }
+            }
         }
     }
 
-    Serial.flush();
-    Serial3.flush();
-
-    Serial.end();
-    Serial3.end();
+    */
 
     return 0;
 }

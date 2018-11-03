@@ -4,7 +4,6 @@
     CMPUT 274 FALL 2018
 
     Assignment 2 part 1: proof of concept
-
 */
 
 #include <Arduino.h>
@@ -13,7 +12,7 @@
 // not connected cause numbers to fluctuate
 const int idPin = 1;
 
-uint16_t skey;
+int skey;
 
 void readString(char str[], int len)
 {
@@ -113,6 +112,8 @@ void setup()
     Serial.begin(9600);
     Serial3.begin(9600);
 
+    Serial.println("Welcome to Arduino chat");
+
     uint16_t private_key = generate_key();
     int p = 19211;
     int g = 6;
@@ -120,22 +121,29 @@ void setup()
 
     Serial.print("Your public key is: ");
     Serial.println(public_key);
+    Serial.println();
 
     // --- done operating with own key, working on obtaining other key -- //
-    Serial.print("Now enter the other user's public key: ");
+    Serial.println("Now enter the other Arduino's public key");
+    Serial.print("It will not display until you press <enter>: ");
     while (Serial.available() == 0)
     {
     }
     // stop here until a key is printed on other serial
 
-    uint16_t B = readUnsigned16();
+    int B = readUnsigned16();
     // B is public key of other user
+    Serial.println(B);
 
-    skey = pow(B, private_key);
+    skey = powMod(B, private_key, p);
     //shared secret key: k = B^a
+    Serial.print("Your shared key is: ");
+    Serial.println(skey);
+    Serial.println();
+    Serial.println();
 }
 
-int encrypted(uint8_t byte) 
+int encrypted(uint8_t byte)
 {
     // encrypts a byte
 
@@ -180,9 +188,9 @@ void readSend()
 
             // follow with line feed char \n
             Serial3.write(encrypted('\n'));
-                // both are encrypted
+            // both are encrypted
 
-                break;
+            break;
         }
         Serial.print(byte);
 
@@ -231,16 +239,41 @@ int main()
 
         // since exclusive or is its own inverse, original message character m
         // can be obtained from encrypted e with klow: m = e (exclusive or) klow
-        if (Serial.available()) {
-            readSend();
+
+
+        if (Serial.available() > 0)
+        // if user has typed something in serial, send it to other user
+        {
+            uint8_t byte = Serial.read();
+
+            if ((int)byte == 13)
+            {
+                Serial3.print( '\r' ^ ((uint8_t) skey));
+                Serial3.print('\n' ^ ((uint8_t) skey));
+            }
+            else
+            {
+
+                uint8_t encryptedByte = byte ^ ((uint8_t)skey);
+                Serial3.write(encryptedByte);
+            }
         }
 
-        if (Serial3.available()) {
-            receive();
+        if (Serial3.available() > 0)
+        // if other user has typed something in serial, decrypt it and 
+        { 
+            uint8_t encryptedByte = Serial.read();
+
+            Serial.print(encryptedByte ^ ((uint8_t) skey));
+            
         }
     }
 
     Serial.flush();
+    Serial3.flush();
+
+    Serial.end();
+    Serial3.end();
 
     return 0;
 }

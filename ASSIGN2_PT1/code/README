@@ -1,0 +1,35 @@
+ NAME: Cynthia Li, Cyrus Diego
+ ID: 1529078, 1528911
+ CMPUT 274 FALL 2018
+
+ Assignment 2 Part 1: Proof of Concept
+--------------------------------------------------------------------------------
+
+INCLUDED FILES:
+- README
+- Simple-Proof-of-Concept.cpp
+- Makefile
+
+ACCESSORIES:
+- Arduino A
+- Arduino B
+- 3 Jumper Wires
+
+WIRING INSTRUCTIONS:
+ Arduino A GND <--> Jumper wire <--> Arduino B GND
+ Arduino A TX3 Pin 14 <--> Jumper wire <--> Arduino B RX3 Pin 15
+ Arduino A RX3 Pin 15 <--> Jumper wire <--> Arduino B TX3 Pin 14
+
+RUNNING INSTRUCTIONS:
+ 1. Connect both Arduino's to a PC using an A-B style USB cable. Ensure that the
+Arduino's are set to the proper serial port:
+    a. In terminal run: "arduino-port-select"
+    b. When prompted to select Arduino-Port 0: press 1
+    c. When prompted to select Arduino-Port 1: press 2
+
+ 2. Move to the directory containing the aboved files
+then run: "make upload && serial-mon-0" and "make upload && serial-mon-1" in
+two seperate terminal windows
+
+ASSUMPTIONS:
+- N/A

@@ -90,6 +90,8 @@ int generate_key()
 
 uint32_t powMod(int g, uint16_t private_key, int p)
 {
+    // FUNCTION HEADER //
+    
     g = g % p;
     uint32_t public_key = 1 % p;
     for (uint32_t i = 0; i < private_key; i++)
@@ -144,19 +146,22 @@ void setup()
 }
 
 uint8_t encr(uint8_t byte) {
+    // encrypts/decrypts byte of information
+
     uint8_t encrypted = byte ^ ((uint8_t) skey);
+    // encrypts byte using xor encryption with computed shared key
 
     return (encrypted);
 }
 
 void send() {
+    // FUNCTION HEADER //
+
     uint8_t c = Serial.read();
-    // reads from keyboard
+    // reads from keyboard, stores character as binary
 
     Serial.write(c);
     // prints to own serial what was typed
-
-    // Serial.write(encr(encr(c)); works properly
 
     if ((int) c == 13) {
         // if carriage return was entered
@@ -168,20 +173,28 @@ void send() {
     }
     if ((int) c != 13) {
         Serial3.write(encr(c));
+        // otherwise, send character to other serial monitor
     }
 
 }
 
 void receive() {
+    // FUNCTION HEADER //
+    
     uint8_t c = Serial3.read();
-    // reads from serial, is in bytes
+    // reads from serial, is in binary
 
     uint8_t decr = encr(c);
+    // decrypts read data
+
     Serial.write(decr);
+    // write ascii character to serial monitor
 }
 
 int main()
 {
+    // FUNCTION HEADER //
+
     setup();
     // shared secret key k returned from setup
 
@@ -195,63 +208,6 @@ while (true) {
         receive();
     }
 }
-
-/*
-    while (true)
-    {
-        // use exlusive-or operation (^) for encryption/decryption
-
-        // given a message character m, compute character e by exclusive or
-        // with first 8 bits:
-        // klow = k mod 256
-        // of key k: e = m (exclusive or) klow
-
-        // since exclusive or is its own inverse, original message character m
-        // can be obtained from encrypted e with klow: m = e (exclusive or) klow
-
-        if (Serial.available() > 0)
-        // if user has typed something in serial, send it to other user
-        {
-            uint8_t byte = Serial.read();
-            // is byte. can be in ascii if print and char if write
-
-            Serial.write(byte);
-            // displays what the user typed
-
-            if ((int)byte == 13)
-            {
-                Serial3.print('\r' ^ ((uint8_t)skey));
-                Serial3.print('\n' ^ ((uint8_t)skey));
-                Serial.println();
-            }
-            else
-            {
-                uint8_t encryptedByte = byte ^ ((uint8_t)skey);
-                Serial3.print(encryptedByte);
-            }
-        }
-
-        if (Serial3.available() > 0)
-        // if other user has typed something in serial, decrypt it and print in serial
-        {
-            while (true)
-            {
-                uint8_t encryptedByte = Serial.read();
-                uint8_t decryptedByte = encryptedByte ^ ((uint8_t)skey);
-
-                Serial.write(decryptedByte);
-                // serial.write prints character represented by ascii
-                // serial.print prints ascii number
-                // serial.read returns ascii char
-                if ((int)encryptedByte == 13)
-                {
-                    break;
-                }
-            }
-        }
-    }
-
-    */
 
     return 0;
 }

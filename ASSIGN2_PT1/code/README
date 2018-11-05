@@ -54,7 +54,8 @@ listed above then run "make upload && serial-mon"
  4. Wait for the generated public keys on each serial monitor to display, and 
  type in the other user's public key.
 
- 5. 
+ 5. Type in a message on the serial monitor, and the same message will be 
+ displayed simultaneously on the other Arduino's serial monitor.
 
 ASSUMPTIONS:
 - Program assumes communication is though turn taking; that is, the two users take

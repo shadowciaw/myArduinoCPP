@@ -104,6 +104,7 @@ uint32_t powMod(int g, uint16_t private_key, int p)
     returns a 16 bit number regardless of it being defined as 32 bits
     as the input numbers are all 16 bits or less.
     */
+   
     g = g % p;
     uint32_t public_key = 1 % p;
     for (uint32_t i = 0; i < private_key; i++)

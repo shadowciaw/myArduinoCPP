@@ -23,10 +23,6 @@
 |   readUnsigned16(); (read_int.cpp)                |
 |   genereate_key(); (bitwise_ops.cpp)              |
 |   powMod(); (diffie-hellman-prelim.cpp)           |
-|   wait_on_serial3(); (assignment page)            |
-|   uint32_to_serial3(); (assignment page)          |
-|   uint32_from_serial3(); (assignment page)        |
-|   next_key(); (assignment page)                   |
 |   encr(); (encrypt_decrypt.cpp)                   |
 |                                                   |
 | The printed text initially was copied to be       |
@@ -38,27 +34,75 @@
 
 const int idPin = 1; // Used for generation of random private key
 
-uint32_t skey; // shared secret key
-uint32_t ckey; // own private key
+uint16_t skey; // Used to store shared secret key. s(hared) key
 
 unsigned int send_count = 0;
 unsigned int recv_count = 0;
 
-const int serverPin = 13; // decides which Arduino is server/client
+void readString(char str[], int len)
+{
+    /*
+    readString() takes in a char array and the length of the array
+    Used to read input from Serial when inputting the individual private
+    keys
+    Source: eClass Lec 17 read_int.cpp 
+    */
 
-uint8_t ACK = 'A'; // acknowledgement from server
-uint8_t CR = 'C';  // acknowledgement from client
+    int index = 0;
+
+    // while looping through array, append to it with the user input
+    while (index < len - 1)
+    {
+        // as long as we're not done reading all of char str array
+        if (Serial.available() > 0)
+        {
+            // if theres something to be read on Serial
+            char byteRead = Serial.read();
+
+            // checks if user pressed enter, if so, break
+            if ((int)byteRead == 13)
+            {
+                break;
+            }
+            else
+            {
+                // append byte to str array
+                str[index] = byteRead;
+                ++index;
+            }
+        }
+    }
+
+    // after while loop is done, index will be at end of array,
+    // appends the null terminator at the end
+    str[index] = '\0';
+}
+
+int readUnsigned16()
+{
+    /*
+    readUnsigned16() used with readString() to accept input from
+    user for typing in other arduino's private key.
+    Source: eClass Lec 17 read_int.cpp (learned the atol() from that Lec)
+    */
+
+    char str[16];        // creates array of length 16 named str
+    readString(str, 16); // calls readString() function
+
+    return atol(str); // returns the integer type of stringed together array
+}
 
 int generate_key()
 {
     /*
     generate_key() generates a 16 bit private key from the idPin
     uses the fluctuation of number read from pin to generate a random number
+    Source: eClass Lec 18 bitwise_ops.cpp (improved upon)
     */
 
-    long int key = 0; // output variable
+    int key = 0; // output variable
 
-    for (int i = 0; i < 32; i++) // 16 iteratiosn -> 16 bits
+    for (int i = 0; i < 16; i++) // 16 iteratiosn -> 16 bits
     {
         int bit = analogRead(idPin) & 1;
         // obtains least significant bit of analogRead
@@ -80,7 +124,9 @@ uint32_t powMod(int g, uint16_t private_key, int p)
     powMod() is used to generate the public key
     returns a 16 bit number regardless of it being defined as 32 bits
     as the input numbers are all 16 bits or less.
+    Source: eClass Lec 18 diffie-hellman-prelim.cpp 
     */
+
     g = g % p;
     uint32_t public_key = 1 % p;
     for (uint32_t i = 0; i < private_key; i++)
@@ -89,134 +135,6 @@ uint32_t powMod(int g, uint16_t private_key, int p)
     }
 
     return public_key;
-}
-
-/** Waits for a certain number of bytes on Serial3 or timeout 
- * @param nbytes: the number of bytes we want
- * @param timeout: timeout period (ms); specifying a negative number
- *                turns off timeouts (the function waits indefinitely
- *                if timeouts are turned off).
- * @return True if the required number of bytes have arrived.
- */
-bool wait_on_serial3(uint8_t nbytes, long timeout)
-{
-    unsigned long deadline = millis() + timeout;
-    //wraparound not a problem
-    while (Serial3.available() < nbytes &&
-           (timeout < 0 || millis() < deadline))
-    {
-        delay(1); // be nice, no busy loop
-    }
-    return Serial3.available() >= nbytes;
-}
-
-/** Writes an uint32_t to Serial3, starting from the least-significant
- * and finishing with the most significant byte. 
- */
-void uint32_to_serial3(uint32_t num)
-{
-    Serial3.write((char)(num >> 0));
-    Serial3.write((char)(num >> 8));
-    Serial3.write((char)(num >> 16));
-    Serial3.write((char)(num >> 24));
-}
-
-/** Reads an uint32_t from Serial3, starting from the least-significant
- * and finishing with the most significant byte. 
- */
-uint32_t uint32_from_serial3()
-{
-    uint32_t num = 0;
-    num = num | ((uint32_t)Serial3.read()) << 0;
-    num = num | ((uint32_t)Serial3.read()) << 8;
-    num = num | ((uint32_t)Serial3.read()) << 16;
-    num = num | ((uint32_t)Serial3.read()) << 24;
-    return num;
-}
-
-void server()
-{
-    // FUNCTION HEADER //
-
-    bool gotCR = false;
-    while (true)
-    {
-        if (wait_on_serial3(1, 1000))
-        {
-            gotCR = true;
-            break;
-        }
-    }
-
-    /*
-        int B = readUnsigned32();
-        // B is the public key of the other user.
-        // might need to change this up? not sure if it would overflow.
-    */
-
-    if (gotCR)
-    {
-        while (true)
-        {
-            if (wait_on_serial3(4, 1000))
-            {
-                uint32_t ckey = uint32_from_serial3();
-            }
-            else
-                ()
-                {
-                    gotCR = false;
-                    break;
-                }
-        }
-    }
-}
-
-void client()
-{
-    // FUNCTION HEADER //
-
-    while (true)
-    {
-        // send CR(ckey); 5 bytes long: 'C' followed by 4 bytes of public key
-        Serial3.write(CR);
-        Serial3.write(ckey);
-
-        if (wait_on_serial3(1, 1000) && (Serial3.read() == ACK) )
-        {
-            // if required number of bytes has arrived
-            // the 1 byte should be ACK ('A')
-            uint8_t check = Serial3.read();
-            if ((int) check == ACK ) {
-                break;
-            }
-        }
-    }
-
-    // receive shared key
-
-    skey = uint32_from_serial3();
-
-    // send ACK
-    Serial3.write(ACK);
-}
-
-void handshake()
-{
-    // FUNCTION HEADER //
-
-    if (serverPin == HIGH)
-    {
-        // if serverPin (digital pin 13) is connected to +5V source, it is the server.
-        // otherwise it is client.
-
-        server();
-    }
-
-    if (serverPin == LOW)
-    {
-        client();
-    }
 }
 
 void setup()
@@ -231,7 +149,6 @@ void setup()
     // set idPin to INPUT and turn on the internal pullup resistor
     pinMode(idPin, INPUT);
     digitalWrite(idPin, HIGH);
-    pinMode(serverPin, INPUT);
 
     // begin serial mons
     Serial.begin(9600);
@@ -241,28 +158,29 @@ void setup()
 
     // generates the random private key and public key
     uint16_t private_key = generate_key();
-    long int p = 2147483647;
-    int g = 16807;
-    uint32_t ckey = powMod(g, private_key, p);
+    int p = 19211;
+    int g = 6;
+    uint32_t public_key = powMod(g, private_key, p);
 
     Serial.print("Your public key is: ");
-    Serial.println(ckey);
+    Serial.println(public_key);
     Serial.println();
 
-    /* TO DO: HANDSHAKING:
-        CLIENT: keeps sending CONNECTION REQUESTS to server
-        SERVER: when server captures one of these requests, acknowledge receipt of message
-            ( so client knows partner is there before moving on )
-        CLIENT: sends acknowledgement of acknowledgement
-            required bc server may have received multiple connection requests that must be discarded
-            before it moves to the data exchange phase.
-            otherwise these requests will show up at beginning of data exchange as messages from client
-        SERVER: while waiting for ack of ack, consumes all outstanding connection requests
-            so when ack arrives, it can move only data exchange phase knowing all connection requests have 
-            been consumed.
-    */
+    // --- done operating with own key, working on obtaining other key -- //
+    Serial.println("Now enter the other Arduino's public key");
+    Serial.print("It will not display until you press <enter>: ");
 
-    handshake();
+    // stop here until a key is printed on other serial
+    while (Serial.available() == 0)
+    {
+    }
+
+    int B = readUnsigned16();
+    // B is public key of other user
+    Serial.println(B);
+
+    skey = powMod(B, private_key, p);
+    //shared secret key: skey = B^a mod p
 
     Serial.print("Your shared key is: ");
     Serial.println(skey);
@@ -270,18 +188,6 @@ void setup()
     Serial.println();
 }
 
-/** Implements the Park-Miller algorithm with 32 bit integer arithmetic 
- * @return ((current_key * 48271)) mod (2^31 - 1);
- * This is linear congruential generator, based on the multiplicative
- * group of integers modulo m = 2^31 - 1.
- * The generator has a long period and it is relatively efficient.
- * Most importantly, the generator's modulus is not a power of two
- * (as is for the built-in rng),
- * hence the keys mod 2^{s} cannot be obtained
- * by using a key with s bits.
- * Based on:
- * http://www.firstpr.com.au/dsp/rand31/rand31-park-miller-carta.cc.txt
- */
 uint32_t next_key(uint32_t current_key)
 {
     const uint32_t modulus = 0x7FFFFFFF; // 2^31-1
@@ -308,7 +214,7 @@ uint8_t encr(uint8_t byte, uint32_t key, unsigned int rounds)
 
     for (int i = 0; i < rounds; i++)
     {
-        current_key = next_key(current_key)
+        current_key = next_key(current_key);
     }
 
     uint8_t encrypted = byte ^ ((uint8_t)current_key);

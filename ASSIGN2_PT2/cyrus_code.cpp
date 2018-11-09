@@ -28,6 +28,7 @@
 |   uint32_from_serial3(); (assignment page)        |
 |   next_key(); (assignment page)                   |
 |   encr(); (encrypt_decrypt.cpp)                   |
+|   powModFast(); (powMod.cpp)                      |
 |                                                   |
 | The printed text initially was copied to be       |
 | identical to the demo video.                      |

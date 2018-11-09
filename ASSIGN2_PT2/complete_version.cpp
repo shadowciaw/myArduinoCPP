@@ -38,8 +38,12 @@
 
 const int idPin = 1; // Used for generation of random private key
 
-uint32_t skey; // shared secret key
-uint32_t ckey; // own private key
+uint32_t shkey;    // shared secret key
+uint32_t otherkey; // server's public key
+uint32_t ownkey;   // client's public key
+
+long int p = 2147483647;
+int g = 16807;
 
 unsigned int send_count = 0;
 unsigned int recv_count = 0;
@@ -83,54 +87,53 @@ uint32_t mulMod(uint32_t a, uint32_t b, uint32_t m)
 	and performing long multiplication on each "bit" while take the mod.
 	The running total is kept track and the modulo is taken at each iteration
     */
-	// running "total"
-    uint32_t ans = 0; 
+    // running "total"
+    uint32_t ans = 0;
     b %= m;
     a %= m;
-	// creates an unsigned integer of value 1 with 32 bits to shift a by
+    // creates an unsigned integer of value 1 with 32 bits to shift a by
     uint32_t shift = 1;
-	// iterates thru 31 bits of the number "a" and shifts by the "i-th" term
-	// to get the LSB and use that to perform long multiplication 
-    for(int i = 0; i < 31; i++)
+    // iterates thru 31 bits of the number "a" and shifts by the "i-th" term
+    // to get the LSB and use that to perform long multiplication
+    for (int i = 0; i < 31; i++)
     {
-		// Goes thru the binary representation of "a" and goes forward if 
-		// the LSB is a 1
+        // Goes thru the binary representation of "a" and goes forward if
+        // the LSB is a 1
         if ((a & (shift << i)))
-        {	
-			// b mod m is added to the running total
+        {
+            // b mod m is added to the running total
             ans += (b % m);
-			// the running total is moded with m 
-            ans %=  m; 
+            // the running total is moded with m
+            ans %= m;
         }
-		// b is doubled and then taked the mod of it 
+        // b is doubled and then taked the mod of it
         b = (b * 2) % m;
     }
     return ans;
-
 }
 
-uint32_t powModFast(uint32_t a, uint32_t b, uint32_t m) 
-{   /*
+uint32_t powModFast(uint32_t a, uint32_t b, uint32_t m)
+{ /*
 	A faster method of taking a^b mod m (^ is exponentiation)
 	Makes use of the mulMod() function to deal with the repeated 
 	multiplication. 
 	Source: eClass Lec 20, powmod.cpp (used and further improved on)
     */
-	uint32_t result = 1%m;
-	uint32_t sqrVal = a%m; 
+    uint32_t result = 1 % m;
+    uint32_t sqrVal = a % m;
 
-	while (b > 0) 
-	{
-		// evalutates to true iff i'th bit of b is 1
-		if (b & 1) 
-		{ 
-			result = mulMod(result,sqrVal,m);
-		}
-		sqrVal = mulMod(sqrVal,sqrVal,m);
-		b = (b >> 1);
-	}
+    while (b > 0)
+    {
+        // evalutates to true iff i'th bit of b is 1
+        if (b & 1)
+        {
+            result = mulMod(result, sqrVal, m);
+        }
+        sqrVal = mulMod(sqrVal, sqrVal, m);
+        b = (b >> 1);
+    }
 
-	return result % m;
+    return result % m;
 }
 
 /** Waits for a certain number of bytes on Serial3 or timeout 
@@ -179,37 +182,45 @@ uint32_t uint32_from_serial3()
 void server()
 {
     // FUNCTION HEADER //
-
-    bool gotCR = false;
+    enum server_state
+    {
+        Listen,
+        WaitingForKey,
+        WaitForAck,
+        DataExchange
+    };
+    sever_state stage = Listen;
     while (true)
     {
-        if (wait_on_serial3(1, 1000))
-        {
-            gotCR = true;
-            break;
-        }
-    }
 
-    /*
-        int B = readUnsigned32();
-        // B is the public key of the other user.
-        // might need to change this up? not sure if it would overflow.
-    */
-
-    if (gotCR)
-    {
-        while (true)
+        switch (stage)
         {
+        case Listen:
+            // in listening stage
+            while (Serial3.availabe() == 0)
+            {
+            }
+
+            if (Serial3.read() == CR)
+            {
+                stage = WaitingForKey;
+            }
+
+        case WaitingForKey:
+            // waiting for key
             if (wait_on_serial3(4, 1000))
             {
-                uint32_t ckey = uint32_from_serial3();
+                otherkey = uint32_from_serial3();
+                Serial3.write(ACK);
+                uint32_to_serial3(ownkey);
             }
             else
-                ()
-                {
-                    gotCR = false;
-                    break;
-                }
+            {
+                stage = Listen;
+            }
+        case WaitForAck:
+
+        case DataExchange:
         }
     }
 }
@@ -220,16 +231,17 @@ void client()
 
     while (true)
     {
-        // send CR(ckey); 5 bytes long: 'C' followed by 4 bytes of public key
+        // send CR(ownkey); 5 bytes long: 'C' followed by 4 bytes of public key
         Serial3.write(CR);
-        Serial3.write(ckey);
+        Serial3.write(ownkey);
 
-        if (wait_on_serial3(1, 1000) && (Serial3.read() == ACK) )
+        if (wait_on_serial3(1, 1000) && (Serial3.read() == ACK))
         {
             // if required number of bytes has arrived
             // the 1 byte should be ACK ('A')
             uint8_t check = Serial3.read();
-            if ((int) check == ACK ) {
+            if ((int)check == ACK)
+            {
                 break;
             }
         }
@@ -237,7 +249,7 @@ void client()
 
     // receive shared key
 
-    skey = uint32_from_serial3();
+    shkey = uint32_from_serial3();
 
     // send ACK
     Serial3.write(ACK);
@@ -283,12 +295,10 @@ void setup()
 
     // generates the random private key and public key
     uint16_t private_key = generate_key();
-    long int p = 2147483647;
-    int g = 16807;
-    uint32_t ckey = powModFast(g, private_key, p);
+    uint32_t ownkeykey = powModFast(g, private_key, p);
 
     Serial.print("Your public key is: ");
-    Serial.println(ckey);
+    Serial.println(ownkey);
     Serial.println();
 
     /* TO DO: HANDSHAKING:
@@ -307,7 +317,7 @@ void setup()
     handshake();
 
     Serial.print("Your shared key is: ");
-    Serial.println(skey);
+    Serial.println(shkey);
     Serial.println();
     Serial.println();
 }
@@ -376,12 +386,12 @@ void send()
     // print/write a newline character to both Serials
 
     // if there's a character available, write encrypted char to Serial 3
-    Serial3.write(encr(text, skey, send_count));
+    Serial3.write(encr(text, shkey, send_count));
     send_count++;
 
     if ((int)text == 13)
     {
-        Serial3.write(encr('\n', skey, send_count));
+        Serial3.write(encr('\n', shkey, send_count));
         send_count++;
         Serial.println();
     }
@@ -398,7 +408,7 @@ void receive()
     uint8_t text = Serial3.read();
 
     // decrypts the text and stores in decr
-    uint8_t decrypt = encr(text, skey, recv_count);
+    uint8_t decrypt = encr(text, shkey, recv_count);
 
     // writes the decrypted text into own serial and shows on screen
     Serial.write(decrypt);

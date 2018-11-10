@@ -200,19 +200,24 @@ void server()
         {
         case Listen:
             // in listening stage
-            while (Serial3.availabe() == 0)
+
+            Serial.println("listening...");
+            while (Serial3.available() == 0)
             {
             }
 
-            if (Serial3.read() == CR)
+            if ((int)Serial3.read() == CR)
             {
                 stage = WaitingForKey;
             }
 
         case WaitingForKey:
             // waiting for key
+
+            Serial.println("waiting for key...");
             if (wait_on_serial3(4, 1000))
             {
+                Serial.println("got a 32bit key!");
                 otherkey = uint32_from_serial3();
                 Serial3.write(ACK);
                 if (not sentownkey)
@@ -226,24 +231,30 @@ void server()
                 stage = Listen;
             }
         case WaitForAck:
-                if (wait_on_serial(1,1000) 
+            if (wait_on_serial3(1, 1000))
+            {
+                Serial.println("got a byte!");
+                if ((int)Serial3.read() == ACK)
                 {
-                if (Serial3.read() == ACK)
-                {
+                    Serial.println("got ack!");
                     stage = DataExchange;
                 }
-                else if (Serial3.read() == CR)
+                else if ((int)Serial3.read() == CR)
                 {
+                    Serial.println("got cr!");
                     stage = WaitingForKey;
                 }
-                }
-                else {
+            }
+            else
+            {
                 stage = Listen;
-                }
+            }
 
-            case DataExchange:
-                break;
+        case DataExchange:
+            Serial.println("data exchange point.");
+            break;
         }
+        break;
     }
 }
 
@@ -255,23 +266,23 @@ void client()
     {
         // send CR(ownkey); 5 bytes long: 'C' followed by 4 bytes of public key
         Serial3.write(CR);
-        Serial3.write(ownkey);
+        uint32_to_serial3(ownkey);
+        Serial.println("write cr and own key");
 
-        if (wait_on_serial3(1, 1000) && (Serial3.read() == ACK))
+        if (wait_on_serial3(1, 1000))
         {
             // if required number of bytes has arrived
             // the 1 byte should be ACK ('A')
-            uint8_t check = Serial3.read();
-            if ((int)check == ACK)
-            {
-                break;
-            }
+            Serial.println("got a byte!");
+            break;
         }
     }
 
     // receive shared key
-
-    shkey = uint32_from_serial3();
+    while (Serial3.available() == 0)
+    {
+    }
+    otherkey = uint32_from_serial3();
 
     // send ACK
     Serial3.write(ACK);
@@ -280,17 +291,22 @@ void client()
 void handshake()
 {
     // FUNCTION HEADER //
+    Serial.println("got to handshake");
 
-    if (serverPin == HIGH)
+    if (digitalRead(serverPin) == HIGH)
     {
         // if serverPin (digital pin 13) is connected to +5V source, it is the server.
         // otherwise it is client.
 
+        Serial.println("I'm server");
         server();
+        Serial.println("got out of server");
     }
 
-    if (serverPin == LOW)
+    else
     {
+
+        Serial.println("I'm client");
         client();
     }
 }
@@ -317,7 +333,7 @@ void setup()
 
     // generates the random private key and public key
     uint16_t private_key = generate_key();
-    uint32_t ownkeykey = powModFast(g, private_key, p);
+    uint32_t ownkey = powModFast(g, private_key, p);
 
     Serial.print("Your public key is: ");
     Serial.println(ownkey);
@@ -339,6 +355,9 @@ void setup()
     handshake();
 
     shkey = powModFast(otherkey, ownkey, p);
+    Serial.print("Other key is: ");
+    Serial.print(otherkey);
+    Serial.println();
 
     Serial.print("Your shared key is: ");
     Serial.println(shkey);
@@ -382,9 +401,9 @@ uint8_t encr(uint8_t byte, uint32_t key, unsigned int rounds)
 
     uint32_t current_key = key;
 
-    for (int i = 0; i < rounds; i++)
+    for (int i = 0; i < (int)rounds; i++)
     {
-        current_key = next_key(current_key)
+        current_key = next_key(current_key);
     }
 
     uint8_t encrypted = byte ^ ((uint8_t)current_key);

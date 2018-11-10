@@ -53,7 +53,7 @@ const int serverPin = 13; // decides which Arduino is server/client
 uint8_t ACK = 'A'; // acknowledgement from server
 uint8_t CR = 'C';  // acknowledgement from client
 
-int generate_key()
+uint32_t generate_key()
 {
     /*
     generate_key() generates a 16 bit private key from the idPin
@@ -218,8 +218,9 @@ void server()
             if (wait_on_serial3(4, 1000))
             {
                 Serial.println("got a 32bit key!");
+
                 otherkey = uint32_from_serial3();
-                Serial.println(otherkey);
+                
                 Serial3.write(ACK);
                 if (not sentownkey)
                 {
@@ -281,13 +282,14 @@ void client()
     }
 
     // receive shared key
-    while (Serial3.available() == 0)
-    {
-    }
     otherkey = uint32_from_serial3();
+
+    Serial.print("other key is:");
+    Serial.println(otherkey,BIN);
 
     // send ACK
     Serial3.write(ACK);
+    Serial.println("sending ack");
 }
 
 void handshake()
@@ -334,7 +336,7 @@ void setup()
     Serial.println("Welcome to Arduino chat");
 
     // generates the random private key and public key
-    uint16_t private_key = generate_key();
+    uint32_t private_key = generate_key();
     uint32_t ownkey = powModFast(g, private_key, p);
     Serial.print("Your private key is: ");
     Serial.println(private_key);

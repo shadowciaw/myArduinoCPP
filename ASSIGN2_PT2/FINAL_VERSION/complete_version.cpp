@@ -219,12 +219,14 @@ void server()
             {
                 Serial.println("got a 32bit key!");
                 otherkey = uint32_from_serial3();
+                Serial.println(otherkey);
                 Serial3.write(ACK);
                 if (not sentownkey)
                 {
                     uint32_to_serial3(ownkey);
                     sentownkey = true;
                 }
+                stage = WaitForAck;
             }
             else
             {
@@ -334,6 +336,8 @@ void setup()
     // generates the random private key and public key
     uint16_t private_key = generate_key();
     uint32_t ownkey = powModFast(g, private_key, p);
+    Serial.print("Your private key is: ");
+    Serial.println(private_key);
 
     Serial.print("Your public key is: ");
     Serial.println(ownkey);
@@ -354,7 +358,7 @@ void setup()
 
     handshake();
 
-    shkey = powModFast(otherkey, ownkey, p);
+    shkey = powModFast(otherkey, private_key, p);
     Serial.print("Other key is: ");
     Serial.print(otherkey);
     Serial.println();

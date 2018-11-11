@@ -220,7 +220,7 @@ void server()
                 Serial.println("got a 32bit key!");
 
                 otherkey = uint32_from_serial3();
-                
+
                 Serial3.write(ACK);
                 if (not sentownkey)
                 {
@@ -265,6 +265,51 @@ void client()
 {
     // FUNCTION HEADER //
 
+    enum client_state
+    {
+        Start,
+        WaitingForAck,
+        DataExchange
+    } ;
+    client_state stageC = Start;
+
+        while (true)
+    {
+        switch (stageC)
+        {
+        case Start:
+
+            Serial.println("starting!");
+            Serial3.write(CR);
+            Serial3.write(ownkey);
+
+            stageC = WaitingForAck;
+
+        case WaitingForAck:
+
+            Serial.println("waiting for ack!!");
+            if (wait_on_serial3(1, 1000))
+            {
+                uint8_t acknowledge = Serial3.read();
+                Serial.println("got ack, receiving key");
+                otherkey = uint32_from_serial3();
+                stageC = DataExchange;
+            }
+            else
+            {
+                stageC = Start;
+            }
+
+        case DataExchange:
+
+            Serial.println("got to data exchange!");
+            break;
+
+        }
+        break;
+    }
+
+    /*
     while (true)
     {
         // send CR(ownkey); 5 bytes long: 'C' followed by 4 bytes of public key
@@ -272,7 +317,7 @@ void client()
         uint32_to_serial3(ownkey);
         Serial.println("write cr and own key");
 
-        if (wait_on_serial3(1, 1000))
+        if (wait_on_serial3(1, 1000) )
         {
             // if required number of bytes has arrived
             // the 1 byte should be ACK ('A')
@@ -290,12 +335,13 @@ void client()
     // send ACK
     Serial3.write(ACK);
     Serial.println("sending ack");
+
+    */
 }
 
 void handshake()
 {
     // FUNCTION HEADER //
-    Serial.println("got to handshake");
 
     if (digitalRead(serverPin) == HIGH)
     {

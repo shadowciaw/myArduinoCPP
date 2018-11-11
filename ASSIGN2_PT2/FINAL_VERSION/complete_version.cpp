@@ -50,8 +50,8 @@ unsigned int recv_count = 0;
 
 const int serverPin = 13; // decides which Arduino is server/client
 
-uint8_t ACK = 'A'; // acknowledgement from server
-uint8_t CR = 'C';  // acknowledgement from client
+char ACK = 'A'; // acknowledgement from server
+char CR = 'C';  // acknowledgement from client
 
 uint32_t generate_key()
 {
@@ -173,8 +173,11 @@ uint32_t uint32_from_serial3()
 {
     uint32_t num = 0;
     num = num | ((uint32_t)Serial3.read()) << 0;
+    Serial.println(num);
     num = num | ((uint32_t)Serial3.read()) << 8;
+    Serial.println(num);
     num = num | ((uint32_t)Serial3.read()) << 16;
+    Serial.println(num);
     num = num | ((uint32_t)Serial3.read()) << 24;
     return num;
 }
@@ -191,6 +194,8 @@ void server()
         WaitForAck,
         DataExchange
     };
+
+    // initiate server state to Listen mode
     server_state stage = Listen;
 
     while (true)
@@ -208,32 +213,41 @@ void server()
 
             if ((int)Serial3.read() == CR)
             {
+                Serial.println("got CR!!");
                 stage = WaitingForKey;
+                break;
             }
 
         case WaitingForKey:
             // waiting for key
 
             Serial.println("waiting for key...");
+
             if (wait_on_serial3(4, 1000))
             {
                 Serial.println("got a 32bit key!");
-
                 otherkey = uint32_from_serial3();
 
                 Serial3.write(ACK);
+
                 if (not sentownkey)
                 {
+                    Serial.println("sent own key");
                     uint32_to_serial3(ownkey);
                     sentownkey = true;
                 }
                 stage = WaitForAck;
+
+                break;
             }
             else
             {
                 stage = Listen;
+                break;
             }
+
         case WaitForAck:
+            Serial.println("waiting for ack from client");
             if (wait_on_serial3(1, 1000))
             {
                 Serial.println("got a byte!");
@@ -241,23 +255,33 @@ void server()
                 {
                     Serial.println("got ack!");
                     stage = DataExchange;
+                    break;
                 }
                 else if ((int)Serial3.read() == CR)
                 {
                     Serial.println("got cr!");
                     stage = WaitingForKey;
+                    break;
                 }
             }
             else
             {
                 stage = Listen;
+                break;
             }
 
         case DataExchange:
             Serial.println("data exchange point.");
             break;
+
+        default: 
+            Serial.println("Error occured");
+            break;
         }
-        break;
+        
+        if (stage == DataExchange) {
+            break;
+        }
     }
 }
 
@@ -270,44 +294,62 @@ void client()
         Start,
         WaitingForAck,
         DataExchange
-    } ;
-    client_state stageC = Start;
+    };
 
-        while (true)
+    // client initial state is Start; update upon state change
+    client_state clientat = Start;
+
+while(true) {
+    switch (clientat)
     {
-        switch (stageC)
+    case Start:
+
+        Serial.println("starting!");
+        Serial3.write(CR);
+        uint32_to_serial3(ownkey);
+
+        clientat = WaitingForAck;
+
+        break;
+
+    case WaitingForAck:
+
+        Serial.println("waiting for ack!!");
+        if (wait_on_serial3(1, 1000) && (int)Serial3.read() == ACK)
         {
-        case Start:
+            Serial.println("got ack, receiving key");
 
-            Serial.println("starting!");
-            Serial3.write(CR);
-            uint32_to_serial3(ownkey);
+            otherkey = uint32_from_serial3();
 
-            stageC = WaitingForAck;
+            // SEND ACK
+            Serial3.write(ACK);
 
-        case WaitingForAck:
-
-            Serial.println("waiting for ack!!");
-            if (wait_on_serial3(1, 1000))
-            {
-                uint8_t acknowledge = Serial3.read();
-                Serial.println("got ack, receiving key");
-                otherkey = uint32_from_serial3();
-                stageC = DataExchange;
-            }
-            else
-            {
-                stageC = Start;
-            }
-
-        case DataExchange:
-
-            Serial.println("got to data exchange!");
-            break;
-
+            // proceed
+            clientat = DataExchange;
         }
+        else
+        {
+            Serial.println("couldnt get ACK byte.");
+            clientat = Start;
+            break;
+        }
+
+    case DataExchange:
+
+        Serial.println("got to data exchange!");
+        break;
+    
+    default:
+        Serial.println("error occured");
+        clientat = Start;
+
         break;
     }
+
+    if (clientat == DataExchange) {
+        break;
+    }
+}
 
     /*
     while (true)

@@ -217,14 +217,16 @@ void server()
             while (Serial3.available() == 0)
             {
             }
-
-            if ((int)Serial3.read() == CR)
+            while (true)
             {
-                // Serial.println("got CR!!");
-                stage = WaitingForKey;
-                // Serial3.flush();
-                break;
+                if ((int)Serial3.read() == CR)
+                {
+                    // Serial.println("got CR!!");
+                    stage = WaitingForKey;
+                    break;
+                }
             }
+            break;
 
         case WaitingForKey:
             // waiting for key
@@ -235,9 +237,7 @@ void server()
             {
                 // Serial.println("got a 32bit key!");
                 otherkey = uint32_from_serial3();
-                // Serial.println(otherkey);
-
-                // Serial3.flush();
+                Serial.println(otherkey);
 
                 Serial3.write(ACK);
 
@@ -263,14 +263,15 @@ void server()
             {
                 // Serial.println("got a byte!");
                 uint8_t byte = Serial3.read();
-                // Serial.println(byte, BIN);
-                if ((int) byte == ACK)
+                Serial.println(byte, BIN);
+
+                if ((int)byte == ACK)
                 {
                     // Serial.println("got ack!");
                     stage = DataExchange;
                     break;
                 }
-                else if ((int) byte == CR)
+                else if ((int)byte == CR)
                 {
                     // Serial.println("got cr!");
                     stage = WaitingForKey;
@@ -381,7 +382,6 @@ void client()
             break;
         }
     }
-
 }
 
 void handshake()

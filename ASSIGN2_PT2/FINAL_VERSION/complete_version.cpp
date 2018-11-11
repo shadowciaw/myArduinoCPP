@@ -39,8 +39,8 @@
 const int idPin = 1; // Used for generation of random private key
 
 uint32_t shkey;    // shared secret key
-uint32_t otherkey; // server's public key
-uint32_t ownkey;   // client's public key
+uint32_t otherkey; // other public key
+uint32_t ownkey;   // own public key
 
 long int p = 2147483647;
 int g = 16807;
@@ -172,17 +172,17 @@ void uint32_to_serial3(uint32_t num)
 uint32_t uint32_from_serial3()
 {
     uint32_t num = 0;
-    num = num | ((uint32_t)Serial3.read()) << 0;
-    Serial.println(num, BIN);
-    
-    num = num | ((uint32_t)Serial3.read()) << 8;
-    Serial.println(num, BIN);
+    num |= ((uint32_t)Serial3.read()) << 0;
+    //Serial.println(num, BIN);
 
-    num = num | ((uint32_t)Serial3.read()) << 16;
-    Serial.println(num, BIN);
+    num |= ((uint32_t)Serial3.read()) << 8;
+    //Serial.println(num, BIN);
 
-    num = num | ((uint32_t)Serial3.read()) << 24;
-    Serial.println(num, BIN);
+    num |= ((uint32_t)Serial3.read()) << 16;
+    // Serial.println(num, BIN);
+
+    num |= ((uint32_t)Serial3.read()) << 24;
+    // Serial.println(num, BIN);
 
     return num;
 }
@@ -221,6 +221,7 @@ void server()
             {
                 Serial.println("got CR!!");
                 stage = WaitingForKey;
+                // Serial3.flush();
                 break;
             }
 
@@ -233,6 +234,8 @@ void server()
             {
                 Serial.println("got a 32bit key!");
                 otherkey = uint32_from_serial3();
+
+                // Serial3.flush();
 
                 Serial3.write(ACK);
 
@@ -278,6 +281,7 @@ void server()
 
         case DataExchange:
             Serial.println("data exchange point.");
+            Serial3.flush();
             break;
 
         default:
@@ -287,6 +291,7 @@ void server()
 
         if (stage == DataExchange)
         {
+
             break;
         }
     }
@@ -312,8 +317,12 @@ void client()
         {
         case Start:
 
-            Serial.println("starting!");
+            Serial.println("starting!, write CR");
             Serial3.write(CR);
+
+            // wait for server to catch up?
+            //delay(50);
+
             uint32_to_serial3(ownkey);
 
             clientat = WaitingForAck;
@@ -327,13 +336,22 @@ void client()
             {
                 Serial.println("got ack, receiving key");
 
-                otherkey = uint32_from_serial3();
+                while (true)
+                {
+                    if (wait_on_serial3(4, 1000))
+                    {
+                        otherkey = uint32_from_serial3();
+                        break;
+                    }
+                }
 
                 // SEND ACK
                 Serial3.write(ACK);
 
                 // proceed
                 clientat = DataExchange;
+
+                break;
             }
             else
             {
@@ -390,6 +408,27 @@ void client()
     */
 }
 
+void send32()
+{
+    uint32_to_serial3(ownkey);
+}
+
+void receive32()
+{
+    while (Serial3.available() == 0)
+    {
+    }
+    while (true)
+    {
+        otherkey = uint32_from_serial3();
+        Serial.println(otherkey);
+        if (otherkey != 0)
+        {
+            break;
+        }
+    }
+}
+
 void handshake()
 {
     // FUNCTION HEADER //
@@ -435,12 +474,13 @@ void setup()
 
     // generates the random private key and public key
     uint32_t private_key = generate_key();
-    uint32_t ownkey = powModFast(g, private_key, p);
+    ownkey = powModFast(g, private_key, p);
     Serial.print("Your private key is: ");
     Serial.println(private_key);
 
     Serial.print("Your public key is: ");
     Serial.println(ownkey);
+    Serial.println(ownkey, BIN);
     Serial.println();
 
     /* TO DO: HANDSHAKING:

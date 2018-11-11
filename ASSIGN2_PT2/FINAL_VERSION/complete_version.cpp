@@ -212,14 +212,15 @@ void server()
         case Listen:
             // in listening stage
 
-            Serial.println("listening...");
+            // Serial.println("listening...");
+            Serial3.flush();
             while (Serial3.available() == 0)
             {
             }
 
             if ((int)Serial3.read() == CR)
             {
-                Serial.println("got CR!!");
+                // Serial.println("got CR!!");
                 stage = WaitingForKey;
                 // Serial3.flush();
                 break;
@@ -228,12 +229,13 @@ void server()
         case WaitingForKey:
             // waiting for key
 
-            Serial.println("waiting for key...");
+            // Serial.println("waiting for key...");
 
             if (wait_on_serial3(4, 1000))
             {
-                Serial.println("got a 32bit key!");
+                // Serial.println("got a 32bit key!");
                 otherkey = uint32_from_serial3();
+                // Serial.println(otherkey);
 
                 // Serial3.flush();
 
@@ -241,7 +243,7 @@ void server()
 
                 if (not sentownkey)
                 {
-                    Serial.println("sent own key");
+                    // Serial.println("sent own key");
                     uint32_to_serial3(ownkey);
                     sentownkey = true;
                 }
@@ -256,19 +258,21 @@ void server()
             }
 
         case WaitForAck:
-            Serial.println("waiting for ack from client");
+            // Serial.println("waiting for ack from client");
             if (wait_on_serial3(1, 1000))
             {
-                Serial.println("got a byte!");
-                if ((int)Serial3.read() == ACK)
+                // Serial.println("got a byte!");
+                uint8_t byte = Serial3.read();
+                // Serial.println(byte, BIN);
+                if ((int) byte == ACK)
                 {
-                    Serial.println("got ack!");
+                    // Serial.println("got ack!");
                     stage = DataExchange;
                     break;
                 }
-                else if ((int)Serial3.read() == CR)
+                else if ((int) byte == CR)
                 {
-                    Serial.println("got cr!");
+                    // Serial.println("got cr!");
                     stage = WaitingForKey;
                     break;
                 }
@@ -280,18 +284,17 @@ void server()
             }
 
         case DataExchange:
-            Serial.println("data exchange point.");
-            Serial3.flush();
+            // Serial.println("data exchange point.");
             break;
 
         default:
-            Serial.println("Error occured");
+            // Serial.println("Error occured");
             break;
         }
 
         if (stage == DataExchange)
         {
-
+            Serial3.flush();
             break;
         }
     }
@@ -317,7 +320,7 @@ void client()
         {
         case Start:
 
-            Serial.println("starting!, write CR");
+            // Serial.println("starting!, write CR");
             Serial3.write(CR);
 
             // wait for server to catch up?
@@ -331,10 +334,10 @@ void client()
 
         case WaitingForAck:
 
-            Serial.println("waiting for ack!!");
+            // Serial.println("waiting for ack!!");
             if (wait_on_serial3(1, 1000) && (int)Serial3.read() == ACK)
             {
-                Serial.println("got ack, receiving key");
+                // Serial.println("got ack, receiving key");
 
                 while (true)
                 {
@@ -355,18 +358,18 @@ void client()
             }
             else
             {
-                Serial.println("couldnt get ACK byte.");
+                // Serial.println("couldnt get ACK byte.");
                 clientat = Start;
                 break;
             }
 
         case DataExchange:
 
-            Serial.println("got to data exchange!");
+            // Serial.println("got to data exchange!");
             break;
 
         default:
-            Serial.println("error occured");
+            // Serial.println("error occured");
             clientat = Start;
 
             break;
@@ -374,59 +377,11 @@ void client()
 
         if (clientat == DataExchange)
         {
+            Serial3.flush();
             break;
         }
     }
 
-    /*
-    while (true)
-    {
-        // send CR(ownkey); 5 bytes long: 'C' followed by 4 bytes of public key
-        Serial3.write(CR);
-        uint32_to_serial3(ownkey);
-        Serial.println("write cr and own key");
-
-        if (wait_on_serial3(1, 1000) )
-        {
-            // if required number of bytes has arrived
-            // the 1 byte should be ACK ('A')
-            Serial.println("got a byte!");
-            break;
-        }
-    }
-
-    // receive shared key
-    otherkey = uint32_from_serial3();
-
-    Serial.print("other key is:");
-    Serial.println(otherkey,BIN);
-
-    // send ACK
-    Serial3.write(ACK);
-    Serial.println("sending ack");
-
-    */
-}
-
-void send32()
-{
-    uint32_to_serial3(ownkey);
-}
-
-void receive32()
-{
-    while (Serial3.available() == 0)
-    {
-    }
-    while (true)
-    {
-        otherkey = uint32_from_serial3();
-        Serial.println(otherkey);
-        if (otherkey != 0)
-        {
-            break;
-        }
-    }
 }
 
 void handshake()
@@ -438,17 +393,17 @@ void handshake()
         // if serverPin (digital pin 13) is connected to +5V source, it is the server.
         // otherwise it is client.
 
-        Serial.println("I'm server");
+        // Serial.println("I'm server");
         server();
-        Serial.println("got out of server");
+        // Serial.println("got out of server");
     }
 
     else
     {
 
-        Serial.println("I'm client");
+        // Serial.println("I'm client");
         client();
-        Serial.println("got out of client");
+        // Serial.println("got out of client");
     }
 }
 
@@ -480,7 +435,7 @@ void setup()
 
     Serial.print("Your public key is: ");
     Serial.println(ownkey);
-    Serial.println(ownkey, BIN);
+    // Serial.println(ownkey, BIN);
     Serial.println();
 
     /* TO DO: HANDSHAKING:

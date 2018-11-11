@@ -187,6 +187,7 @@ void server()
     // FUNCTION HEADER //
 
     bool sentownkey = false;
+
     enum server_state
     {
         Listen,
@@ -315,7 +316,7 @@ while(true) {
     case WaitingForAck:
 
         Serial.println("waiting for ack!!");
-        if (wait_on_serial3(1, 1000) && (int)Serial3.read() == ACK)
+        if (wait_on_serial3(1, 1000) && (int) Serial3.read() == ACK)
         {
             Serial.println("got ack, receiving key");
 
@@ -400,6 +401,7 @@ void handshake()
 
         Serial.println("I'm client");
         client();
+        Serial.println("got out of client");
     }
 }
 

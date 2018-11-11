@@ -281,7 +281,7 @@ void client()
 
             Serial.println("starting!");
             Serial3.write(CR);
-            Serial3.write(ownkey);
+            uint32_to_serial3(ownkey);
 
             stageC = WaitingForAck;
 

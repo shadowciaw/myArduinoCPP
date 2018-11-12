@@ -1,0 +1,85 @@
+NAME: Cynthia Li, Cyrus Diego
+ID: 1529078, 1528911
+CMPUT 274 FALL 2018
+
+Assignment 2 Part 2: Complete Implementation
+    This program allows two Arduinos and its users to communicate with encrypted
+    transmissions. 
+     
+    Upon start-up, a private key and a public key is generated (after a second) on
+    each Arduino. The users will then enter the other user's public key into their
+    program and establish a common secret key to be used for encrypting and 
+    decrypting messages sent and received.
+
+Details of collaboration: Full collaboration between Cynthia Li and Cyrus Diego
+
+Functions copied (and modified) from in class examples:                                        
+   readString(); (read_int.cpp)                    
+   readUnsigned16(); (read_int.cpp)                
+   genereate_key(); (bitwise_ops.cpp)                        
+   wait_on_serial3(); (assignment page)           
+   uint32_to_serial3(); (assignment page)          
+   uint32_from_serial3(); (assignment page)        
+   next_key(); (assignment page)                   
+   encr(); (encrypt_decrypt.cpp)                   
+   powModFast(); (powMod.cpp)  
+
+INCLUDED FILES:
+- README
+- Complete_Implementation.cpp
+- Makefile
+
+ACCESSORIES/REQUIRED COMPONENTS:
+- Arduino A (Arduino MEGA)
+- Arduino B (Arduino MEGA)
+- 3 Jumper Wires
+
+WIRING INSTRUCTIONS:
+ Arduino A GND <--> Jumper wire <--> Arduino B GND
+ Arduino A TX3 Pin 14 <--> Jumper wire <--> Arduino B RX3 Pin 15
+ Arduino A RX3 Pin 15 <--> Jumper wire <--> Arduino B TX3 Pin 14
+ Arduino A <--> USB connector <--> Computer (1)
+ Arduino B <--> USB connector <--> Computer (2)
+ 
+ note: Computer can be singular or separate.
+
+RUNNING INSTRUCTIONS:
+** With one PC **
+ 1. Connect both Arduino's to a PC using an A-B style USB cable.
+
+ 2. Check if they are both connected to the system by running "lsusb"
+in terminal. There should be two listings of "Arduino SA Mega"
+
+ 3. Ensure that the Arduino's are set to the proper serial port:
+    a. In terminal run: "arduino-port-select"
+    b. When prompted to select Arduino-Port 0: press 1
+    c. When prompted to select Arduino-Port 1: press 2
+
+ 4. Move to the directory containing the aboved files
+then run: "make upload && serial-mon-0" and "make upload && serial-mon-1" in
+two seperate terminal windows
+
+ 5. Wait until the public keys of each Arduino is displayed on monitor before
+ typing in the other Arduino's genereated public keys. Then press enter.
+
+ 6. Type any character into the serial monitor, and the same characters will
+appear simultaneously on the other Arduino's serial monitor.
+
+** With two PC's **
+ 1. Connect an Arduino into a respective PC using an A-B style USB cable.
+
+ 2. Check if they are both connected to the system by running "lsusb"
+in terminal. There should be two listings of "Arduino SA Mega"
+
+ 3. In each PC, open terminal and go to the working directory with the files
+listed above then run "make upload && serial-mon"
+
+ 4. Wait for the generated public keys on each serial monitor to display, and 
+type in the other user's public key.
+
+ 5. Type in a message on the serial monitor, and the same message will be 
+displayed simultaneously on the other Arduino's serial monitor.
+
+ASSUMPTIONS:
+- Program assumes communication is though turn taking; that is, the two users take
+turns sending a message instead of both users typing simultaneously.

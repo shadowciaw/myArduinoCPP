@@ -303,6 +303,11 @@ void server()
             break;
         }
 
+        // if something goes wrong, restart the program at Listen.
+        default:
+            stage = Listen;
+            break;
+
         // once server is in Data Exchange, flush buffer 
         // and break outer while loop
         if (stage == DataExchange)

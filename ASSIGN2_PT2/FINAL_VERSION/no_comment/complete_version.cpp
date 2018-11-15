@@ -234,7 +234,7 @@ void server()
             if (wait_on_serial3(4, 1000))
             {
                 otherkey = uint32_from_serial3();
-                Serial.println(otherkey);
+                // Serial.println(otherkey);
 
                 Serial3.write(ACK);
 
@@ -249,16 +249,15 @@ void server()
             }
             else
             {
-                stage = Listen;
+                stage = Listen; 
                 break;
             }
 
         case WaitForAck:
-            // Serial.println("waiting for ack from client");
+            //Serial.println("waiting for ack from client");
             if (wait_on_serial3(1, 1000))
             {
                 uint8_t byte = Serial3.read();
-                Serial.println(byte, BIN);
 
                 if ((int)byte == ACK)
                 {
@@ -284,6 +283,7 @@ void server()
 
         default:
             // Serial.println("Error occured");
+            stage = Listen;
             break;
         }
 

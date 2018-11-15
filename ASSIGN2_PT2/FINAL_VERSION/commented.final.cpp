@@ -68,7 +68,7 @@ uint32_t generate_key()
         // shorthand for key = key | (bit << i ); | is or operator
         // << is operator for binary shifting. 1 << 2 shifts 1 from 2^0 to 2^2
         key |= (bit << i);
-        
+
         delay(50); // delay 50 ms
     }
 
@@ -122,7 +122,7 @@ uint32_t mulMod(uint32_t a, uint32_t b, uint32_t m)
 	Source: eClass Lec 20, powmod.cpp (used and further improved on)
 */
 uint32_t powModFast(uint32_t a, uint32_t b, uint32_t m)
-{ 
+{
     uint32_t result = 1 % m;
     uint32_t sqrVal = a % m;
 
@@ -151,15 +151,15 @@ uint32_t powModFast(uint32_t a, uint32_t b, uint32_t m)
  */
 bool wait_on_serial3(uint8_t nbytes, long timeout)
 {
-    // creates timer on how long to wait by finding current time and 
-    // adding the number of milliseconds to wait for 
+    // creates timer on how long to wait by finding current time and
+    // adding the number of milliseconds to wait for
     unsigned long deadline = millis() + timeout;
     // wraparound not a problem
 
-    while (Serial3.available() < nbytes && 
-                (timeout < 0 || millis() < deadline))
+    while (Serial3.available() < nbytes &&
+           (timeout < 0 || millis() < deadline))
     {
-        delay(1);   // be nice, no busy loop
+        delay(1); // be nice, no busy loop
     }
     return Serial3.available() >= nbytes;
 }
@@ -207,7 +207,7 @@ void server()
 {
     bool sentownkey = false;
 
-    // different server_states 
+    // different server_states
     enum server_state
     {
         Listen,
@@ -223,7 +223,7 @@ void server()
     {
         switch (stage)
         {
-        
+
         // Listening Stage
         case Listen:
 
@@ -231,7 +231,7 @@ void server()
             while (Serial3.available() == 0)
             {
             }
-            
+
             // wait until client sends CR.
             while (true)
             {
@@ -247,17 +247,16 @@ void server()
         // Waiting for Key stage
         case WaitingForKey:
 
-            // if client sends 4 byte key within 1000 ms, store 
+            // if client sends 4 byte key within 1000 ms, store
             // and send ACK
             if (wait_on_serial3(4, 1000))
             {
-                otherkey = uint32_from_serial3();  // store client key
-                Serial.println(otherkey);
+                otherkey = uint32_from_serial3(); // store client key
                 Serial3.write(ACK);
 
                 if (not sentownkey)
                 {
-                    uint32_to_serial3(ownkey);  // sends server key
+                    uint32_to_serial3(ownkey); // sends server key
                     sentownkey = true;
                 }
 
@@ -301,17 +300,17 @@ void server()
 
         case DataExchange:
             break;
-        }
 
         // if something goes wrong, restart the program at Listen.
         default:
             stage = Listen;
             break;
-
-        // once server is in Data Exchange, flush buffer 
+        }
+        // once server is in Data Exchange, flush buffer
         // and break outer while loop
         if (stage == DataExchange)
         {
+            Serial.println("data exchanged");
             Serial3.flush();
             break;
         }
@@ -370,11 +369,11 @@ void client()
                 // Sends ACK to server
                 Serial3.write(ACK);
 
-                // changes state to Data Exchange 
+                // changes state to Data Exchange
                 clientat = DataExchange;
                 break;
             }
-            
+
             // if no ACK from server, go back to listening stage
             else
             {
@@ -391,7 +390,7 @@ void client()
             break;
         }
 
-        // once at Data exchange state, flushs buffer and breaks outer 
+        // once at Data exchange state, flushs buffer and breaks outer
         // while loop
         if (clientat == DataExchange)
         {
@@ -587,4 +586,4 @@ int main()
     Serial3.end();
 
     return 0;
-} 
+}

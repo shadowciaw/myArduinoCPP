@@ -392,7 +392,6 @@ void client()
         // while loop
         if (clientat == DataExchange)
         {
-            Serial3.flush();
             break;
         }
     }
@@ -535,8 +534,8 @@ void send()
         Serial.println();
     }
 
-    Serial.print(" send count: ");
-    Serial.println(send_count);
+    //Serial.print(" send count: ");
+    //Serial.println(send_count);
 }
 
 /*
@@ -555,9 +554,8 @@ void receive()
     Serial.write(decrypt);
     recv_count++;
 
-    Serial.print(" recv count: ");
-    Serial.println(recv_count);
-
+    //Serial.print(" recv count: ");
+    //Serial.println(recv_count);
 }
 
 /*
@@ -570,6 +568,11 @@ int main()
     setup();
 
     recv_count = 0;
+
+    while (Serial3.available() > 0)
+    {
+        uint8_t byte = Serial3.read();
+    }
 
     while (true)
     {

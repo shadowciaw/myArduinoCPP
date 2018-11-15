@@ -310,8 +310,6 @@ void server()
         // and break outer while loop
         if (stage == DataExchange)
         {
-            Serial.println("data exchanged");
-            Serial3.flush();
             break;
         }
     }
@@ -536,6 +534,9 @@ void send()
         send_count++;
         Serial.println();
     }
+
+    Serial.print(" send count: ");
+    Serial.println(send_count);
 }
 
 /*
@@ -553,6 +554,10 @@ void receive()
     // writes the decrypted text into own serial and shows on screen
     Serial.write(decrypt);
     recv_count++;
+
+    Serial.print(" recv count: ");
+    Serial.println(recv_count);
+
 }
 
 /*
@@ -563,6 +568,8 @@ int main()
 {
     // calls setup() which does all the background work for the encryption
     setup();
+
+    recv_count = 0;
 
     while (true)
     {

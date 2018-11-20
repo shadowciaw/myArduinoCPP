@@ -57,7 +57,7 @@ const char CR = 'C';  // acknowledgement from client
 */
 uint32_t generate_key()
 {
-    long int key = 0; // output variable
+    uint32_t key = 0; // output variable
 
     for (int i = 0; i < 32; i++) // 32 iterations -> 32 bits
     {
@@ -418,6 +418,34 @@ void handshake()
     }
 }
 
+/* 
+    get_sharedkey() calls relevant functions to genereate keys
+    and prints own public key on serial monitor 
+*/
+
+void key_generation()
+{
+    Serial.println("Welcome to Arduino chat");
+
+    // generates the random private key and public key
+    uint32_t private_key = generate_key();
+    ownkey = powModFast(g, private_key, p);
+
+    Serial.print("Your public key is: ");
+    Serial.println(ownkey);
+    Serial.println();
+
+    // initializes handshake() function to setup server/client arduinos
+    handshake();
+
+    Serial.println(otherkey);
+
+    // calculates shared key
+    shkey = powModFast(otherkey, private_key, p);
+
+    Serial.println(shkey);
+}
+
 /*
     initial setup for program: generates keys for both Arduino's and
     displays text in both Serial-mon. Calls upon handshake() function
@@ -437,30 +465,8 @@ void setup()
     Serial.begin(9600);
     Serial3.begin(9600);
 
-    Serial.println("Welcome to Arduino chat");
-
-    // generates the random private key and public key
-    uint32_t private_key = generate_key();
-    ownkey = powModFast(g, private_key, p);
-    Serial.print("Your private key is: ");
-    Serial.println(private_key);
-
-    Serial.print("Your public key is: ");
-    Serial.println(ownkey);
-    Serial.println();
-
-    // initializes handshake() function to setup server/client arduinos
-    handshake();
-
-    shkey = powModFast(otherkey, private_key, p);
-    Serial.print("Other key is: ");
-    Serial.print(otherkey);
-    Serial.println();
-
-    Serial.print("Your shared key is: ");
-    Serial.println(shkey);
-    Serial.println();
-    Serial.println();
+    // calls function to generate private + public + shared key for chat program
+    key_generation();
 }
 
 /*
@@ -579,7 +585,7 @@ int main()
         if (Serial3.available())
         {
             receive();
-        } 
+        }
     }
 
     Serial.flush();

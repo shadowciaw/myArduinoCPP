@@ -1,4 +1,4 @@
-build-mega2560/morse.o: morse.cpp \
+build-mega2560/potentiometer.o: potentiometer.cpp \
  /usr/share/arduino/hardware/arduino//cores/arduino/Arduino.h \
  /usr/share/arduino/hardware/arduino//cores/arduino/binary.h \
  /usr/share/arduino/hardware/arduino//cores/arduino/WCharacter.h \

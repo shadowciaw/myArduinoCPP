@@ -2,27 +2,36 @@
 // onboard LED is attached to pin 13
 #include <Arduino.h>
 
-int ledPin = 13;
-
 // slider of the potentiometer attached to this analog input
-int analogInPin = 0;
+//int analogInPin = 0;
 
 // On and off time in milliseconds for the light
-int delayTime = 300;
+//int delayTime = 300;
 
 void setup() {
   // configure ledPin to be a digital output
-  pinMode(ledPin, OUTPUT);
+  // pinMode(ledPin, OUTPUT);
+  init();
+  Serial.begin(9600);
 }
 
-void loop() {
-  // read the voltage on the analog input and convert
-  // into an integer value in the range [0, 1023]
-  delayTime = analogRead(analogInPin);
+int main() {
 
-  digitalWrite(ledPin, HIGH);
-  delay(delayTime);
+  setup();
+  
+  while (true) {
+    Serial.print(2);
+    Serial.print(2);
+    delay(1000);
+    //Serial.flush();
+  }
 
-  digitalWrite(ledPin, LOW);
-  delay(delayTime);
+  return 0;
 }
+
+// normal is 0 0
+
+// up -4 0
+// down 4 0
+
+// left 
